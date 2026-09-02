@@ -170,6 +170,7 @@ void Engine::Cache()
 		playerlist.push_back(entity);
 	}
 	Actors = playerlist;
+	CacheItems();
 }
 void Engine::GetGNames()
 {
@@ -240,4 +241,86 @@ std::vector<std::shared_ptr<ActorEntity>> Engine::GetActors()
 uint64_t Engine::GetActorSize()
 {
 	return MaxPacket;
+}
+
+std::vector<ItemInfo> Engine::GetItems()
+{
+	return Items;
+}
+
+void Engine::CacheItems()
+{
+	Items.clear();
+	if (!OwningActor || MaxPacket <= 0 || MaxPacket > 5000)
+		return;
+
+	// Bulk-read all actor pointers
+	std::vector<uint64_t> actorList(MaxPacket);
+	TargetProcess.Read(OwningActor, actorList.data(), MaxPacket * sizeof(uint64_t));
+
+	// Scatter-read ObjectID for every non-null actor
+	std::vector<DWORD> objIds(MaxPacket, 0);
+	std::vector<size_t> validIdx;
+	validIdx.reserve(512);
+	{
+		auto handle = TargetProcess.CreateScatterHandle();
+		for (size_t i = 0; i < (size_t)MaxPacket; i++) {
+			if (!actorList[i]) continue;
+			validIdx.push_back(i);
+			TargetProcess.AddScatterReadRequest(handle, actorList[i] + SDK.ObjectID,
+			                                   &objIds[i], sizeof(DWORD));
+		}
+		TargetProcess.ExecuteReadScatter(handle);
+		TargetProcess.CloseScatterHandle(handle);
+	}
+
+	// Resolve class names (cached to avoid re-reading GNames for same ID)
+	std::unordered_map<DWORD, std::string> nameCache;
+	nameCache.reserve(64);
+
+	std::vector<uint64_t> pkgActors;
+	pkgActors.reserve(64);
+	for (size_t i : validIdx) {
+		DWORD decId = DecryptCIndex(objIds[i]);
+		auto [it, inserted] = nameCache.emplace(decId, std::string{});
+		if (inserted)
+			it->second = GetNames(decId);
+		if (it->second.find("ItemPackage") != std::string::npos)
+			pkgActors.push_back(actorList[i]);
+	}
+	if (pkgActors.empty())
+		return;
+
+	// Scatter-read RootComponent for package actors
+	std::vector<uint64_t> rootComps(pkgActors.size(), 0);
+	{
+		auto handle = TargetProcess.CreateScatterHandle();
+		for (size_t k = 0; k < pkgActors.size(); k++)
+			TargetProcess.AddScatterReadRequest(handle, pkgActors[k] + SDK.RootComponent,
+			                                   &rootComps[k], sizeof(uint64_t));
+		TargetProcess.ExecuteReadScatter(handle);
+		TargetProcess.CloseScatterHandle(handle);
+	}
+
+	// Scatter-read world position for valid root components
+	std::vector<UEVector> positions(pkgActors.size(), {});
+	std::vector<size_t> rcValid;
+	rcValid.reserve(pkgActors.size());
+	{
+		auto handle = TargetProcess.CreateScatterHandle();
+		for (size_t k = 0; k < rootComps.size(); k++) {
+			if (rootComps[k] < 0x10000) continue;
+			rcValid.push_back(k);
+			TargetProcess.AddScatterReadRequest(handle, rootComps[k] + SDK.ComponentLocation,
+			                                   &positions[k], sizeof(UEVector));
+		}
+		TargetProcess.ExecuteReadScatter(handle);
+		TargetProcess.CloseScatterHandle(handle);
+	}
+
+	for (size_t k : rcValid) {
+		auto& p = positions[k];
+		if (p.X == 0.f && p.Y == 0.f && p.Z == 0.f) continue;
+		Items.push_back({ p, "Loot" });
+	}
 }

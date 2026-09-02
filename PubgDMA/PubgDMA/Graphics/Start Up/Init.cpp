@@ -5,6 +5,7 @@
 #include "Globals.h"
 #include "Camera.h"
 #include "PlayerEsp.h"
+#include "ItemEsp.h"
 ID2D1Factory* Factory;
 IDWriteFactory* FontFactory;
 ID2D1HwndRenderTarget* RenderTarget;
@@ -117,6 +118,7 @@ void RenderFrame()
 	RenderTarget->Clear(Colour(0, 0, 0, 255)); // clear over the last buffer
 	RenderTarget->SetTransform(D2D1::Matrix3x2F::Identity()); // set new transform
 	DrawPlayerEsp();
+	DrawItemEsp();
 	Render();
 	RenderTarget->EndDraw();
 }

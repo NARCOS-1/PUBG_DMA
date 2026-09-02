@@ -62,7 +62,19 @@ void CreateGUI()
 		//	killeresptab->Push(textsize);
 		//}
 		//tabcontroller->Push(killeresptab);
-		auto overlaytab = std::make_shared<Tab>(LIT(L"Overlay"), 5, 30, &SelectedTab, 0, 20);
+		auto itemesptab = std::make_shared<Tab>(LIT(L"Item ESP"), 5, 30, &SelectedTab, 0, 20);
+		{
+			auto enabled = std::make_shared<Toggle>(100, 5, LIT(L"Enabled"), &Configs.Items.Enabled);
+			itemesptab->Push(enabled);
+			auto itemcolour = std::make_shared<ColourPicker>(160, 6, &Configs.Items.Colour);
+			itemesptab->Push(itemcolour);
+			auto maxdist = std::make_shared<Slider<int>>(100, 25, 150, LIT(L"Max Distance"), LIT(L"m"), 0, 1000, &Configs.Items.MaxDistance);
+			itemesptab->Push(maxdist);
+			auto fontsize = std::make_shared<Slider<int>>(100, 50, 150, LIT(L"Text Size"), LIT(L"px"), 4, 16, &Configs.Items.FontSize);
+			itemesptab->Push(fontsize);
+		}
+		tabcontroller->Push(itemesptab);
+		auto overlaytab = std::make_shared<Tab>(LIT(L"Overlay"), 5, 55, &SelectedTab, 0, 20);
 		{
 			auto overrideresolution = std::make_shared<Toggle>(100, 5, LIT(L"Override W2S Resolution"), &Configs.Overlay.OverrideResolution);
 			overlaytab->Push(overrideresolution);
@@ -94,7 +106,7 @@ void CreateGUI()
 
 		}
 		tabcontroller->Push(overlaytab);
-		auto configtab = std::make_shared<Tab>(LIT(L"Config"), 5, 55, &SelectedTab, 0, 20);
+		auto configtab = std::make_shared<Tab>(LIT(L"Config"), 5, 80, &SelectedTab, 0, 20);
 		{
 			auto saveconfig = std::make_shared<Button>(100, 5, LIT(L"Save"), []()
 				{
