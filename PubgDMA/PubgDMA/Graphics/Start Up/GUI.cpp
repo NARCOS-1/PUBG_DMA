@@ -121,14 +121,28 @@ void CreateGUI()
 
 			auto loadconfig = std::make_shared<Button>(165, 5, LIT(L"Load"), []()
 				{
-
-
 					LoadConfig(L"Default.json");
-					CreateGUI(); // reinit/ reload
+					CreateGUI();
 					SelectedTab = 0;
-
 				});
 			configtab->Push(loadconfig);
+
+			auto webradar = std::make_shared<Button>(100, 30, LIT(L"WebRadar"), []()
+				{
+					wchar_t exePath[MAX_PATH];
+					GetModuleFileNameW(NULL, exePath, MAX_PATH);
+					std::wstring dir(exePath);
+					dir = dir.substr(0, dir.find_last_of(L"\\/"));
+					std::wstring radarPath = dir + L"\\radar.html";
+					ShellExecuteW(NULL, L"open", radarPath.c_str(), NULL, NULL, SW_SHOW);
+				});
+			configtab->Push(webradar);
+
+			auto exitbtn = std::make_shared<Button>(100, 55, LIT(L"Exit"), []()
+				{
+					PostQuitMessage(0);
+				});
+			configtab->Push(exitbtn);
 		}
 		tabcontroller->Push(configtab);
 	}

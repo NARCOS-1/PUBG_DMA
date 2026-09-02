@@ -12,6 +12,7 @@
 #include <fstream>
 #include <ppltasks.h>
 #include <windowsx.h>
+#include <shellapi.h>
 #include <WinSock2.h>
 #include <ws2tcpip.h>
 #include <TlHelp32.h>
