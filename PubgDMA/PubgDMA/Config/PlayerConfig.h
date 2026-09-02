@@ -14,6 +14,8 @@ public:
 	int MaxDistance = 1000;
 	D2D1::ColorF TextColour = Colour(255, 255, 255);
 	int FontSize = 11;
+	int BoneThickness = 1;
+	bool ShowTeammates = true;
     void ToJsonColour(json* j, const std::string& name, D2D1::ColorF* colour)
     {
         (*j)[ConfigName][name][LIT("r")] = colour->r;
@@ -39,6 +41,8 @@ public:
         j[ConfigName][LIT("Name")] = Name;
         j[ConfigName][LIT("FontSize")] = FontSize;
         j[ConfigName][LIT("MaxDistance")] = MaxDistance;
+        j[ConfigName][LIT("BoneThickness")] = BoneThickness;
+        j[ConfigName][LIT("ShowTeammates")] = ShowTeammates;
         ToJsonColour(&j, LIT("TextColour"), &TextColour);
 
         return j;
@@ -55,6 +59,10 @@ public:
             FontSize = j[ConfigName][LIT("FontSize")];
         if (j[ConfigName].contains(LIT("MaxDistance")))
             MaxDistance = j[ConfigName][LIT("MaxDistance")];
+        if (j[ConfigName].contains(LIT("BoneThickness")))
+            BoneThickness = j[ConfigName][LIT("BoneThickness")];
+        if (j[ConfigName].contains(LIT("ShowTeammates")))
+            ShowTeammates = j[ConfigName][LIT("ShowTeammates")];
         FromJsonColour(j, LIT("TextColour"), &TextColour);
     }
 };

@@ -30,9 +30,8 @@ void DrawPlayerEsp()
 		if (entity->Mesh < 65535) {
 			continue;
 		}
-		//if (entity->TempId == Local.Teamid) {
-		//	continue;
-		//}
+		if (!Configs.Survivor.ShowTeammates && entity->TempId == Local.Teamid)
+			continue;
 		
 		Vector3 Head3d = Vector3(entity->Head3D.X, entity->Head3D.Y, entity->Head3D.Z);
 		Vector3 neck3d = Vector3(entity->neck3D.X, entity->neck3D.Y, entity->neck3D.Z);
@@ -100,30 +99,33 @@ void DrawPlayerEsp()
 				|| Vector3::Distance(Relbow3d, Rhand3d) / 100.0f > 2 || Vector3::Distance(pelvis3d, Lbuttock3d) / 100.0f > 2
 				|| Vector3::Distance(Lknee3d, Lfoot3d) / 100.0f > 2 || Vector3::Distance(Rknee3d, Rfoot3d) / 100.0f > 2)
 				continue;
-			OutlineCircle(Head.x, Head.y,(Head.y - neck.y)/2,1, config.TextColour);
-			FilledLine(Head.x, Head.y, neck.x, neck.y, 1, config.TextColour);
-			FilledLine(neck.x, neck.y, pelvis.x, pelvis.y, 1, config.TextColour);
-			FilledLine(Lshoulder.x, Lshoulder.y, neck.x, neck.y, 1, config.TextColour);
-			FilledLine(Lelbow.x, Lelbow.y, Lshoulder.x, Lshoulder.y, 1, config.TextColour);
-			FilledLine(Lhand.x, Lhand.y, Lelbow.x, Lelbow.y, 1, config.TextColour);
+			int t = config.BoneThickness;
+			OutlineCircle(Head.x, Head.y,(Head.y - neck.y)/2, (float)t, config.TextColour);
+			FilledLine(Head.x, Head.y, neck.x, neck.y, t, config.TextColour);
+			FilledLine(neck.x, neck.y, pelvis.x, pelvis.y, t, config.TextColour);
+			FilledLine(Lshoulder.x, Lshoulder.y, neck.x, neck.y, t, config.TextColour);
+			FilledLine(Lelbow.x, Lelbow.y, Lshoulder.x, Lshoulder.y, t, config.TextColour);
+			FilledLine(Lhand.x, Lhand.y, Lelbow.x, Lelbow.y, t, config.TextColour);
 
-			FilledLine(Rshoulder.x, Rshoulder.y, neck.x, neck.y, 1, config.TextColour);
-			FilledLine(Relbow.x, Relbow.y, Rshoulder.x, Rshoulder.y, 1, config.TextColour);
-			FilledLine(Rhand.x, Rhand.y, Relbow.x, Relbow.y, 1, config.TextColour);
+			FilledLine(Rshoulder.x, Rshoulder.y, neck.x, neck.y, t, config.TextColour);
+			FilledLine(Relbow.x, Relbow.y, Rshoulder.x, Rshoulder.y, t, config.TextColour);
+			FilledLine(Rhand.x, Rhand.y, Relbow.x, Relbow.y, t, config.TextColour);
 
-			FilledLine(Lbuttock.x, Lbuttock.y, pelvis.x, pelvis.y, 1, config.TextColour);
-			FilledLine(Lknee.x, Lknee.y, Lbuttock.x, Lbuttock.y, 1, config.TextColour);
-			FilledLine(Lfoot.x, Lfoot.y, Lknee.x, Lknee.y, 1, config.TextColour);
+			FilledLine(Lbuttock.x, Lbuttock.y, pelvis.x, pelvis.y, t, config.TextColour);
+			FilledLine(Lknee.x, Lknee.y, Lbuttock.x, Lbuttock.y, t, config.TextColour);
+			FilledLine(Lfoot.x, Lfoot.y, Lknee.x, Lknee.y, t, config.TextColour);
 
-			FilledLine(Rbuttock.x, Rbuttock.y, pelvis.x, pelvis.y, 1, config.TextColour);
-			FilledLine(Rknee.x, Rknee.y, Rbuttock.x, Rbuttock.y, 1, config.TextColour);
-			FilledLine(Rfoot.x, Rfoot.y, Rknee.x, Rknee.y, 1, config.TextColour);
+			FilledLine(Rbuttock.x, Rbuttock.y, pelvis.x, pelvis.y, t, config.TextColour);
+			FilledLine(Rknee.x, Rknee.y, Rbuttock.x, Rbuttock.y, t, config.TextColour);
+			FilledLine(Rfoot.x, Rfoot.y, Rknee.x, Rknee.y, t, config.TextColour);
 		}
 
 
 	}
 	if (Local.SpectatedCount > 0) {
-		//DrawText(1920 / 2, 900, L"SpectatedCount£º" + std::to_string(Local.SpectatedCount), "Verdana", 11, Colour(255, 255, 255), CentreCentre);
+		std::wstring specText = L"SPECTATORS: " + std::to_wstring(Local.SpectatedCount);
+		DrawText(Configs.Overlay.Width / 2, 40, specText, "VerdanaBold", 13, Colour(255, 60, 60), CentreCentre);
+		//DrawText(1920 / 2, 900, L"SpectatedCountï¿½ï¿½" + std::to_string(Local.SpectatedCount), "Verdana", 11, Colour(255, 255, 255), CentreCentre);
 	}
 
 }

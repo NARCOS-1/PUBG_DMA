@@ -16,6 +16,8 @@
 #include "TabListBoxController.h"
 #include "TextBox.h"
 #include "ConfigUtilities.h"
+#include "Globals.h"
+#include "Engine.h"
 int SelectedTab = 1;
 int SelectedSubTab = 0;
 int TabCount = 0;
@@ -46,6 +48,10 @@ void CreateGUI()
 			playeresptab->Push(maxdistance);
 			auto textsize = std::make_shared<Slider<int>>(100, 70, 150, LIT(L"Text Size"), LIT(L"px"), 4, 16, &Configs.Survivor.FontSize);
 			playeresptab->Push(textsize);
+			auto thickness = std::make_shared<Slider<int>>(100, 95, 150, LIT(L"Thickness"), LIT(L"px"), 1, 5, &Configs.Survivor.BoneThickness);
+			playeresptab->Push(thickness);
+			auto showteammates = std::make_shared<Toggle>(100, 120, LIT(L"Show Teammates"), &Configs.Survivor.ShowTeammates);
+			playeresptab->Push(showteammates);
 		}
 		tabcontroller->Push(playeresptab);
 		//auto killeresptab = std::make_shared<Tab>(LIT(L"Killer ESP"), 5, 30, &SelectedTab, 0, 20);
@@ -137,6 +143,13 @@ void CreateGUI()
 					ShellExecuteW(NULL, L"open", radarPath.c_str(), NULL, NULL, SW_SHOW);
 				});
 			configtab->Push(webradar);
+
+			auto restartbtn = std::make_shared<Button>(165, 30, LIT(L"Restart"), []()
+				{
+					EngineInstance = std::make_shared<Engine>();
+					EngineInstance->Cache();
+				});
+			configtab->Push(restartbtn);
 
 			auto exitbtn = std::make_shared<Button>(100, 55, LIT(L"Exit"), []()
 				{
