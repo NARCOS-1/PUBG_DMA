@@ -5,7 +5,9 @@
 #include "Init.h"
 #include "GUI.h"
 #include "Engine.h"
+#include "WebRadar.h"
 std::shared_ptr<Engine> EngineInstance;
+std::unique_ptr<WebRadar> WebRadarInstance;
 std::string ProcessName;
 
 void main()
@@ -33,7 +35,8 @@ void main()
 	EngineInstance = std::make_shared<Engine>();
 	EngineInstance->Cache();
 
-	
+	WebRadarInstance = std::make_unique<WebRadar>();
+	WebRadarInstance->Start();
 
 	//uint64_t persistentlevel = 0x190;
 	//persistentlevel = TargetProcess.Read<uint64_t>(gobjects + gameinstance);
