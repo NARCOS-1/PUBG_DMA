@@ -1,4 +1,5 @@
 #pragma once
+#include "Pch.h"
 class Entity;
 using condition = std::function<bool()>;
 using child = std::shared_ptr<Entity>;

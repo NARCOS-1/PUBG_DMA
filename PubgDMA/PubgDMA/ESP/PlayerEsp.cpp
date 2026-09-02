@@ -79,9 +79,9 @@ void DrawPlayerEsp()
 
 		Vector3 campos = Vector3(EngineInstance->GetCameraCache().POV.Location.X, EngineInstance->GetCameraCache().POV.Location.Y, EngineInstance->GetCameraCache().POV.Location.Z);
 		float distance = (Vector3::Distance(campos, Head3d) / 100.0f);
-		if (distance < 0)
+		if (distance < 0 || distance > 9999.0f || !std::isfinite(distance))
 			continue;
-		std::wstring wdistance = config.Distance ? L"[" + std::to_wstring((int)distance) + L"m]" : L"";
+		std::wstring wdistance = config.Distance ? L"[" + std::to_wstring(static_cast<int>(distance)) + L"m]" : L"";
 		if (distance > config.MaxDistance)
 			continue;
 		float deltaZ = (Head3d.z - campos.z) / 100;

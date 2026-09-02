@@ -29,7 +29,7 @@ std::wstring ScreenHeight = std::to_wstring(Configs.Overlay.Height);
 void CreateGUI()
 {
 	MenuEntity = std::make_shared<Container>();
-	auto form = std::make_shared<Form>(100, 100.0f, 300, 200, 2, 30, LIT(L"PUBG Cheat By ISTAR"), false);
+	auto form = std::make_shared<Form>(100, 100.0f, 300, 200, 2, 30, LIT(L"PUBG Cheat By NARCOS"), false);
 	{
 		auto tabcontroller = std::make_shared<TabController>();
 		form->Push(tabcontroller);
