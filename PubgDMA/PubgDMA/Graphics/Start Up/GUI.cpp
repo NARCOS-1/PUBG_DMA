@@ -146,8 +146,7 @@ void CreateGUI()
 
 			auto restartbtn = std::make_shared<Button>(165, 30, LIT(L"Restart"), []()
 				{
-					EngineInstance = std::make_shared<Engine>();
-					EngineInstance->Cache();
+					EngineInstance = nullptr;
 				});
 			configtab->Push(restartbtn);
 

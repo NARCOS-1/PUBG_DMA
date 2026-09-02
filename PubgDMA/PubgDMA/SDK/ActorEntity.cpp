@@ -73,7 +73,7 @@ FMatrix FMatrix::MatrixMultiplication(const FMatrix& other)
 }
 void GetIndex(Index& index)
 {
-	index.Head = 35;//66ÌìÁé¸Ç
+	index.Head = 35;//66ï¿½ï¿½ï¿½ï¿½ï¿½
 	index.neck = 5;
 	index.pelvis = 1;
 	index.Lshoulder = 88;
@@ -177,6 +177,15 @@ void ActorEntity::SetUp3()
 	Rknee3D = GetBoneMatrix(Rknee);
 	Rfoot3D = GetBoneMatrix(Rfoot);
 
+	if (PlayerState && Name == LIT(L"Entity")) {
+		uint64_t nameData = TargetProcess.Read<uint64_t>(PlayerState + SDK.PlayerName);
+		int32_t  nameLen  = TargetProcess.Read<int32_t>(PlayerState + SDK.PlayerName + 8);
+		if (nameData > 0x10000 && nameLen > 1 && nameLen < 64) {
+			std::vector<wchar_t> buf(nameLen);
+			TargetProcess.Read(nameData, buf.data(), nameLen * sizeof(wchar_t));
+			if (buf[0]) Name = std::wstring(buf.data(), nameLen - 1);
+		}
+	}
 }
 int ActorEntity::GetPlayerRole()
 {
