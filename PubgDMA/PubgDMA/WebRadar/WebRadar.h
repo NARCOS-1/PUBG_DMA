@@ -1,5 +1,5 @@
 #pragma once
-#include <mosquitto.h>
+#include <Mosquitto/mosquitto.h>
 #include <atomic>
 #include <thread>
 #include <string>
