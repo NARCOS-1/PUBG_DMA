@@ -10,27 +10,27 @@ Engine::Engine()
 	if (InitDecrypt(SDK.Decrypt)) {
 
 		uintptr_t base_data = TargetProcess.GetBaseAddress(ProcessName);
-		printf("base_data = 0x%llx\n", base_data);
 		uintptr_t uworld_raw = TargetProcess.Read<uintptr_t>(base_data + SDK.UWorld);
-		printf("UWorld raw (encrypted) = 0x%llx\n", uworld_raw);
 		UWorld = xe_decrypt(uworld_raw);
-		printf("GWorld: 0x%llx\n", UWorld);
 		CurrentLevel = xe_decrypt(TargetProcess.Read<uint64_t>(UWorld + SDK.CurrentLevel));
-		printf("PersistentLevel: 0x%llx\n", CurrentLevel);
 		GameInstance = xe_decrypt(TargetProcess.Read<uint64_t>(UWorld + SDK.GameInstance));
-		printf("OwningGameInstance: 0x%llx\n", GameInstance);
 		LocalPlayers = xe_decrypt(TargetProcess.Read<uint64_t>(TargetProcess.Read<uint64_t>(GameInstance + SDK.LocalPlayers)));
-		printf("LocalPlayers: 0x%llx\n", LocalPlayers);
 		PlayerController = xe_decrypt(TargetProcess.Read<uint64_t>(LocalPlayers + SDK.PlayerController));
-		printf("PlayerController: 0x%llx\n", PlayerController);
 		AcknowledgedPawn = xe_decrypt(TargetProcess.Read<uint64_t>(PlayerController + SDK.AcknowledgedPawn));
-		printf("AcknowledgedPawn: 0x%llx\n", AcknowledgedPawn);
 		PlayerCameraManager = TargetProcess.Read<uint64_t>(PlayerController + SDK.PlayerCameraManager);
-		printf("CameraManager: 0x%llx\n", PlayerCameraManager);
 		CameraEntry.POV.FOV = TargetProcess.Read<float>(PlayerCameraManager + SDK.CameraFov);
 		CameraEntry.POV.Location = TargetProcess.Read<UEVector>(PlayerCameraManager + SDK.CameraPos);
 		CameraEntry.POV.Rotation = TargetProcess.Read<UERotator>(PlayerCameraManager + SDK.CameraRot);
-		printf("CameraCacheEntry: 0x%x\n", CameraEntry);
+#ifdef _DEBUG
+		printf("base_data       = 0x%llx\n", base_data);
+		printf("GWorld          = 0x%llx\n", UWorld);
+		printf("PersistentLevel = 0x%llx\n", CurrentLevel);
+		printf("GameInstance    = 0x%llx\n", GameInstance);
+		printf("LocalPlayers    = 0x%llx\n", LocalPlayers);
+		printf("PlayerCtrl      = 0x%llx\n", PlayerController);
+		printf("AckPawn         = 0x%llx\n", AcknowledgedPawn);
+		printf("CameraManager   = 0x%llx\n", PlayerCameraManager);
+#endif
 		GetGNames();
 	}
 }
@@ -47,10 +47,11 @@ inline bool Engine::InitDecrypt(uint64_t offset)
 		DecryptPtr = TargetProcess.Read<uintptr_t>(TargetProcess.GetBaseAddress(ProcessName) + offset);
 		Sleep(1000);
 	}
-	printf("DecryptPtr = %p\n", DecryptPtr);
 	int32_t Tmp1Add = TargetProcess.Read<int32_t>(DecryptPtr + 3);
 	Tmpadd = Tmp1Add + DecryptPtr + 7;
-	printf("Tmp1Add (rel) = 0x%x  Tmpadd (abs) = 0x%llx\n", (uint32_t)Tmp1Add, Tmpadd);
+#ifdef _DEBUG
+	printf("DecryptPtr = %p  Tmpadd = 0x%llx\n", DecryptPtr, Tmpadd);
+#endif
 	unsigned char ShellcodeBuff[1024] = { NULL };
 	ShellcodeBuff[0] = 0x90;
 	ShellcodeBuff[1] = 0x90;
@@ -62,8 +63,11 @@ inline bool Engine::InitDecrypt(uint64_t offset)
 	ShellcodeBuff[6] = 0x90;
 	ShellcodeBuff[7] = 0x90;
 	ShellcodeBuff[8] = 0x90;
-	fnDecryptFunctoin = (DecryptFunctoin)VirtualAlloc(NULL, sizeof(ShellcodeBuff) + 4, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	RtlCopyMemory((LPVOID)fnDecryptFunctoin, (LPVOID)ShellcodeBuff, sizeof(ShellcodeBuff));
+	void* mem = VirtualAlloc(NULL, sizeof(ShellcodeBuff) + 4, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	RtlCopyMemory(mem, ShellcodeBuff, sizeof(ShellcodeBuff));
+	DWORD oldProt;
+	VirtualProtect(mem, sizeof(ShellcodeBuff) + 4, PAGE_EXECUTE_READ, &oldProt);
+	fnDecryptFunctoin = (DecryptFunctoin)mem;
 	return 1;
 }
 inline uintptr_t Engine::xe_decrypt(const uintptr_t encrypted)
@@ -119,8 +123,9 @@ void Engine::Cache()
 	Local.Teamid = TargetProcess.Read<uint64_t>(AcknowledgedPawn + SDK.LastTeamNum);
 	Local.SpectatedCount = TargetProcess.Read<uint64_t>(AcknowledgedPawn + SDK.SpectatedCount);
 	MaxPacket = TargetProcess.Read<int>(OwningActor + 8);
-	printf("Actor Array: %p\n", OwningActor);
-	printf("Actor Array Size: %d\n", MaxPacket);
+#ifdef _DEBUG
+	printf("Actor Array: %p  Size: %d\n", OwningActor, MaxPacket);
+#endif
 	if (MaxPacket == 0) {
 		return;
 	}

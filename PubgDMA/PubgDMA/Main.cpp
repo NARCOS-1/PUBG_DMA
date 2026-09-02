@@ -6,10 +6,23 @@
 #include "GUI.h"
 #include "Engine.h"
 #include "WebRadar.h"
+#include <random>
 std::shared_ptr<Engine> EngineInstance;
 std::unique_ptr<WebRadar> WebRadarInstance;
 std::string ProcessName;
 
+// Generates a random alphanumeric wide string — different each run
+static std::wstring RandName(size_t len = 12)
+{
+	static const wchar_t pool[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	std::mt19937_64 rng(GetCurrentProcessId() ^ GetTickCount64());
+	std::uniform_int_distribution<size_t> dist(0, 61);
+	std::wstring s(len, L'\0');
+	for (auto& c : s) c = pool[dist(rng)];
+	return s;
+}
+
+#ifdef _DEBUG
 static LONG WINAPI CrashHandler(EXCEPTION_POINTERS* ep)
 {
 	printf("\n[CRASH] Exception 0x%08X at 0x%llx\n",
@@ -24,6 +37,7 @@ static LONG WINAPI CrashHandler(EXCEPTION_POINTERS* ep)
 	getchar();
 	return EXCEPTION_CONTINUE_SEARCH;
 }
+#endif
 
 void main()
 {
@@ -52,9 +66,6 @@ void main()
 
 	WebRadarInstance = std::make_unique<WebRadar>();
 	WebRadarInstance->Start();
-
-	//uint64_t persistentlevel = 0x190;
-	//persistentlevel = TargetProcess.Read<uint64_t>(gobjects + gameinstance);
 }
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -74,15 +85,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
 	HWND hWnd;
 	WNDCLASSEX wc;
+
+#ifdef _DEBUG
 	AllocConsole();
 	FILE* fDummy;
 	freopen_s(&fDummy, LIT("CONIN$"), LIT("r"), stdin);
 	freopen_s(&fDummy, LIT("CONOUT$"), LIT("w"), stderr);
 	freopen_s(&fDummy, LIT("CONOUT$"), LIT("w"), stdout);
-	printf(LIT("Debugging Window:\n"));
-
+	printf(LIT("Debugging Window:\ninizializing...\n"));
 	AddVectoredExceptionHandler(1, CrashHandler);
+#endif
+
 	main();
+
+	// Random class and window names — different each launch
+	std::wstring wndClass = RandName();
+	std::wstring wndTitle = RandName();
+
 	ZeroMemory(&wc, sizeof(WNDCLASSEX));
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -90,20 +109,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wc.hInstance = hInstance;
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
-	wc.lpszClassName = L"GUI Framework";
+	wc.lpszClassName = wndClass.c_str();
 	RegisterClassEx(&wc);
 
-	hWnd = CreateWindowEx(WS_EX_APPWINDOW, wc.lpszClassName, L"GUI Framework",
+	// WS_EX_TOOLWINDOW hides from taskbar and Alt+Tab
+	// WS_EX_LAYERED required for SetLayeredWindowAttributes
+	hWnd = CreateWindowEx(
+		WS_EX_TOOLWINDOW | WS_EX_LAYERED,
+		wndClass.c_str(), wndTitle.c_str(),
 		WS_POPUP,
-		0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), NULL, NULL, hInstance, NULL);
+		0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+		NULL, NULL, hInstance, NULL);
 
 	if (!hWnd)
 		return -1;
 
-
 	SetLayeredWindowAttributes(hWnd, RGB(0, 0, 0), 255, LWA_ALPHA);
-
 	ShowWindow(hWnd, nCmdShow);
+
+#ifdef _DEBUG
+	// Keep console visible but behind overlay in debug
+	ShowWindow(GetConsoleWindow(), SW_SHOW);
+#else
+	// Hide console in release — no visible window besides the overlay
+	ShowWindow(GetConsoleWindow(), SW_HIDE);
+#endif
 
 	InitD2D(hWnd);
 	CreateGUI();
@@ -123,7 +153,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		RenderFrame();
 	}
 	CleanD2D();
-	printf("Press ENTER to exit...\n");
-	getchar();
 	return msg.wParam;
 }
