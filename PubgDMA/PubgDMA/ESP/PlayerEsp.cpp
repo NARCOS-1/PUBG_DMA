@@ -92,6 +92,8 @@ void DrawPlayerEsp()
 
 		if (!Head.IsZero() && !Lhand.IsZero() && !Rhand.IsZero() && !neck.IsZero() && !Lshoulder.IsZero() && !Lelbow.IsZero() && !Rshoulder.IsZero()
 			&& !Relbow.IsZero() && !Lbuttock.IsZero() && !Lknee.IsZero() && !Lfoot.IsZero()) {
+			if (config.Name && !entity->Name.empty())
+				DrawText(Head.x, Head.y - 15, entity->Name, "Verdana", config.FontSize, config.TextColour, CentreCentre);
 			DrawText((Rfoot.x + Lfoot.x)/2, Rfoot.y + 10, wdistance, "Verdana", config.FontSize, config.TextColour, CentreCentre);
 			if (Vector3::Distance(Head3d, neck3d) / 100.0f > 2 || Vector3::Distance(neck3d, pelvis3d) / 100.0f > 2
 				|| Vector3::Distance(pelvis3d, Lshoulder3d) / 100.0f > 2 || Vector3::Distance(Lelbow3d, Lhand3d) / 100.0f > 2

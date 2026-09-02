@@ -130,7 +130,7 @@ void FilledLine(int xstart, int ystart, int xend, int yend, int width, MyColour 
 	D2D1_POINT_2F start = { static_cast<float>(xstart), static_cast<float>(ystart) };
 	D2D1_POINT_2F finish = { static_cast<float>(xend), static_cast<float>(yend) };
 	Brush->SetColor(colour.Get());
-	RenderTarget->DrawLine(start, finish, Brush);
+	RenderTarget->DrawLine(start, finish, Brush, static_cast<float>(width));
 }
 
 // allows you to draw single lines, rather than being forced to use double
