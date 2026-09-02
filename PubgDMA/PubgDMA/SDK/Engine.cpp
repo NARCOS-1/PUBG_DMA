@@ -92,7 +92,13 @@ DWORD Engine::DecryptCIndex(DWORD Encrypted)
 	uint64_t _DecryptOne = SDK.NameIndexXor1;
 	uint64_t _DecryptTwo = SDK.NameIndexXor2;
 	if (SDK.NameIsROR == 3) return _XOR_(_XOR_(_SHL_(Encrypted, _TableTwo), _DecryptTwo), Encrypted);
-	Encrypted = SDK.NameIsROR == 1 ? _ROR_(_XOR_(Encrypted, _DecryptOne), _TableOne) : _ROL_(_XOR_(Encrypted, _DecryptOne), _TableOne);
+	if (SDK.NameIsROR == 1) {
+		const DWORD xored = _XOR_(Encrypted, static_cast<DWORD>(_DecryptOne));
+		return (((xored >> 14) & 0x000F0000u) | (xored << 18))
+		     ^ _ROR_(xored, _TableOne)
+		     ^ static_cast<DWORD>(_DecryptTwo);
+	}
+	Encrypted = _ROL_(_XOR_(Encrypted, _DecryptOne), _TableOne);
 	return _XOR_(_XOR_(_SHL_(Encrypted, _TableTwo), _DecryptTwo), Encrypted);
 }
 std::wstring string_to_wstring(const std::string& str) {
