@@ -83,8 +83,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	AddVectoredExceptionHandler(1, CrashHandler);
 	main();
-	printf("Press ENTER to exit...\n");
-	getchar();
 	ZeroMemory(&wc, sizeof(WNDCLASSEX));
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -125,5 +123,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		RenderFrame();
 	}
 	CleanD2D();
+	printf("Press ENTER to exit...\n");
+	getchar();
 	return msg.wParam;
 }
