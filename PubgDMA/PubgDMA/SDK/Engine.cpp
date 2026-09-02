@@ -10,9 +10,18 @@ Engine::Engine()
 	if (InitDecrypt(SDK.Decrypt)) {
 
 		uintptr_t base_data = TargetProcess.GetBaseAddress(ProcessName);
-		printf("base_data = 0x%x\n", base_data);
-		UWorld = xe_decrypt(TargetProcess.Read<uintptr_t>(TargetProcess.GetBaseAddress(ProcessName) + SDK.UWorld));
-		printf("GWorld: 0x%x\n", UWorld);
+		printf("base_data = 0x%llx\n", base_data);
+		printf("Tmpadd = 0x%llx\n", Tmpadd);
+		uintptr_t uworld_raw = TargetProcess.Read<uintptr_t>(base_data + SDK.UWorld);
+		printf("UWorld raw (encrypted) = 0x%llx\n", uworld_raw);
+		__try {
+			UWorld = xe_decrypt(uworld_raw);
+		} __except (EXCEPTION_EXECUTE_HANDLER) {
+			printf("[!] xe_decrypt CRASHED (AV in shellcode) code=0x%x\n", GetExceptionCode());
+			printf("[!] Check Decrypt offset or shellcode prologue patch\n");
+			return;
+		}
+		printf("GWorld: 0x%llx\n", UWorld);
 		CurrentLevel = xe_decrypt(TargetProcess.Read<uint64_t>(UWorld + SDK.CurrentLevel));
 		printf("PersistentLevel: 0x%x\n", CurrentLevel);
 		GameInstance = xe_decrypt(TargetProcess.Read<uint64_t>(UWorld + SDK.GameInstance));
@@ -45,9 +54,10 @@ inline bool Engine::InitDecrypt(uint64_t offset)
 		DecryptPtr = TargetProcess.Read<uintptr_t>(TargetProcess.GetBaseAddress(ProcessName) + offset);
 		Sleep(1000);
 	}
-	printf("DecryptPtr = %p\n",DecryptPtr);
+	printf("DecryptPtr = %p\n", DecryptPtr);
 	int32_t Tmp1Add = TargetProcess.Read<int32_t>(DecryptPtr + 3);
 	Tmpadd = Tmp1Add + DecryptPtr + 7;
+	printf("Tmp1Add (rel) = 0x%x  Tmpadd (abs) = 0x%llx\n", Tmp1Add, Tmpadd);
 	unsigned char ShellcodeBuff[1024] = { NULL };
 	ShellcodeBuff[0] = 0x90;
 	ShellcodeBuff[1] = 0x90;
