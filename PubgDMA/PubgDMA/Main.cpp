@@ -10,6 +10,21 @@ std::shared_ptr<Engine> EngineInstance;
 std::unique_ptr<WebRadar> WebRadarInstance;
 std::string ProcessName;
 
+static LONG WINAPI CrashHandler(EXCEPTION_POINTERS* ep)
+{
+	printf("\n[CRASH] Exception 0x%08X at 0x%llx\n",
+		ep->ExceptionRecord->ExceptionCode,
+		(uint64_t)ep->ExceptionRecord->ExceptionAddress);
+	if (ep->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
+		printf("[CRASH] Access violation %s address 0x%llx\n",
+			ep->ExceptionRecord->ExceptionInformation[0] ? "writing" : "reading",
+			ep->ExceptionRecord->ExceptionInformation[1]);
+	fflush(stdout);
+	printf("Press ENTER to exit...\n");
+	getchar();
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+
 void main()
 {
 	bool gamefound = true;
@@ -66,7 +81,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	freopen_s(&fDummy, LIT("CONOUT$"), LIT("w"), stdout);
 	printf(LIT("Debugging Window:\n"));
 
+	AddVectoredExceptionHandler(1, CrashHandler);
 	main();
+	printf("Press ENTER to exit...\n");
+	getchar();
 	ZeroMemory(&wc, sizeof(WNDCLASSEX));
 	wc.cbSize = sizeof(WNDCLASSEX);
 	wc.style = CS_HREDRAW | CS_VREDRAW;
