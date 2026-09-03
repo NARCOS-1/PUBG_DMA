@@ -271,8 +271,8 @@ void Engine::CacheItems()
 	std::vector<uint64_t> actorList(MaxPacket);
 	TargetProcess.Read(OwningActor, actorList.data(), MaxPacket * sizeof(uint64_t));
 
-	// Scatter-read PlayerState and RootComponent for every non-null actor
-	std::vector<uint64_t> playerStates(MaxPacket, 0);
+	// Scatter-read Mesh and RootComponent for every non-null actor
+	std::vector<uint64_t> meshPtrs(MaxPacket, 0);
 	std::vector<uint64_t> rootComps(MaxPacket, 0);
 	std::vector<size_t> validIdx;
 	validIdx.reserve(512);
@@ -280,9 +280,10 @@ void Engine::CacheItems()
 		auto handle = TargetProcess.CreateScatterHandle();
 		for (size_t i = 0; i < (size_t)MaxPacket; i++) {
 			if (!actorList[i]) continue;
+			if (actorList[i] == AcknowledgedPawn) continue;
 			validIdx.push_back(i);
-			TargetProcess.AddScatterReadRequest(handle, actorList[i] + SDK.PlayerState,
-			                                   &playerStates[i], sizeof(uint64_t));
+			TargetProcess.AddScatterReadRequest(handle, actorList[i] + SDK.Mesh,
+			                                   &meshPtrs[i], sizeof(uint64_t));
 			TargetProcess.AddScatterReadRequest(handle, actorList[i] + SDK.RootComponent,
 			                                   &rootComps[i], sizeof(uint64_t));
 		}
@@ -290,13 +291,13 @@ void Engine::CacheItems()
 		TargetProcess.CloseScatterHandle(handle);
 	}
 
-	// Non-player actors with a valid root component are loot/world objects
+	// Actors with no skeletal mesh but a valid root component are world items/objects
+	// Player characters have Mesh >= 65535 (valid pointer); items/packages do not
 	std::vector<size_t> candidates;
 	candidates.reserve(256);
 	for (size_t i : validIdx) {
-		if (playerStates[i] != 0) continue;   // has PlayerState = player pawn, skip
-		if (rootComps[i] < 0x10000) continue; // invalid root component
-		if (actorList[i] == AcknowledgedPawn) continue;
+		if (meshPtrs[i] >= 65535) continue;   // has skeletal mesh = player character, skip
+		if (rootComps[i] < 0x10000) continue;  // invalid root component
 		candidates.push_back(i);
 	}
 	if (candidates.empty())

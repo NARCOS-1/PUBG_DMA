@@ -86,13 +86,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HWND hWnd;
 	WNDCLASSEX wc;
 
-#ifdef _DEBUG
+	// Always show console for status output
 	AllocConsole();
-	FILE* fDummy;
-	freopen_s(&fDummy, LIT("CONIN$"), LIT("r"), stdin);
-	freopen_s(&fDummy, LIT("CONOUT$"), LIT("w"), stderr);
-	freopen_s(&fDummy, LIT("CONOUT$"), LIT("w"), stdout);
-	printf(LIT("Debugging Window:\ninizializing...\n"));
+	{
+		FILE* fDummy;
+		freopen_s(&fDummy, "CONIN$", "r", stdin);
+		freopen_s(&fDummy, "CONOUT$", "w", stderr);
+		freopen_s(&fDummy, "CONOUT$", "w", stdout);
+	}
+	printf("Initializing...\n");
+#ifdef _DEBUG
 	AddVectoredExceptionHandler(1, CrashHandler);
 #endif
 
@@ -112,10 +115,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wc.lpszClassName = wndClass.c_str();
 	RegisterClassEx(&wc);
 
-	// WS_EX_TOOLWINDOW hides from taskbar and Alt+Tab
+	// WS_EX_APPWINDOW forces the window into the taskbar
 	// WS_EX_LAYERED required for SetLayeredWindowAttributes
 	hWnd = CreateWindowEx(
-		WS_EX_TOOLWINDOW | WS_EX_LAYERED,
+		WS_EX_APPWINDOW | WS_EX_LAYERED,
 		wndClass.c_str(), wndTitle.c_str(),
 		WS_POPUP,
 		0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
@@ -127,13 +130,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetLayeredWindowAttributes(hWnd, RGB(0, 0, 0), 255, LWA_ALPHA);
 	ShowWindow(hWnd, nCmdShow);
 
-#ifdef _DEBUG
-	// Keep console visible but behind overlay in debug
 	ShowWindow(GetConsoleWindow(), SW_SHOW);
-#else
-	// Hide console in release — no visible window besides the overlay
-	ShowWindow(GetConsoleWindow(), SW_HIDE);
-#endif
 
 	InitD2D(hWnd);
 	CreateGUI();

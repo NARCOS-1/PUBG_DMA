@@ -17,6 +17,10 @@ void DrawItemEsp()
 	auto cam    = EngineInstance->GetCameraCache();
 	Vector3 campos(cam.POV.Location.X, cam.POV.Location.Y, cam.POV.Location.Z);
 
+	// Debug: show how many world actors were found
+	std::wstring dbg = L"Items Found: " + std::to_wstring(items.size());
+	DrawText(Configs.Overlay.Width / 2, 60, dbg, "Verdana", 10, MyColour(1.f, 1.f, 0.f, 1.f), CentreCentre);
+
 	for (auto& item : items) {
 		Vector3 pos(item.position.X, item.position.Y, item.position.Z);
 		if (pos.IsZero())
